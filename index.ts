@@ -55,12 +55,12 @@ async function loadSound(url: string): Promise<AudioBuffer> {
     return audioContext.decodeAudioData(arrayBuffer);
 }
 
-async function generateAnimalese(text: string): Promise<AudioBuffer> {
+async function generateAnimalese(text: string): Promise<AudioBuffer | null> {
     if (!audioContext) audioContext = new AudioContext();
-
+    
     const soundIndices: string[] = [];
     const text_lower = text.toLowerCase();
-
+    
     for (let i = 0; i < text_lower.length; i++) {
         const char = text_lower[i];
         if (char === "s" && text_lower[i + 1] === "h") {
@@ -83,35 +83,42 @@ async function generateAnimalese(text: string): Promise<AudioBuffer> {
             soundIndices.push(`sound${String(index).padStart(2, "0")}`);
         }
     }
-
+    
+    // 🚨 No valid characters? Just return null
+    if (soundIndices.length === 0) {
+        return null;
+    }
+    
     const totalDuration = soundIndices.length * 0.1;
+    const frameCount = Math.max(1, Math.floor(audioContext.sampleRate * totalDuration));
+    
     const outputBuffer = audioContext.createBuffer(
         1,
-        audioContext.sampleRate * totalDuration,
+        frameCount,
         audioContext.sampleRate
     );
     const outputData = outputBuffer.getChannelData(0);
-
+    
     let offset = 0;
     for (let i = 0; i < soundIndices.length; i++) {
         const soundIndex = soundIndices[i];
         const buffer = soundBuffers[soundIndex];
         if (!buffer) continue;
-
+        
         const variation = 0.15;
         let pitchShift = 2.8 + Math.random() * variation;
-
+        
         const isQuestion = text_lower.endsWith("?");
         if (isQuestion && i >= soundIndices.length * 0.8) {
             const progress =
                 (i - soundIndices.length * 0.8) / (soundIndices.length * 0.2);
             pitchShift += progress * 0.1 + 0.1;
         }
-
+        
         const inputData = buffer.getChannelData(0);
         const inputLength = inputData.length;
         const outputLength = Math.floor(inputLength / pitchShift);
-
+        
         for (let j = 0; j < outputLength; j++) {
             const inputIndex = Math.floor(j * pitchShift);
             if (inputIndex < inputLength && offset + j < outputData.length) {
@@ -120,9 +127,10 @@ async function generateAnimalese(text: string): Promise<AudioBuffer> {
         }
         offset += outputLength;
     }
-
+    
     return outputBuffer;
 }
+
 
 async function playSound(buffer: AudioBuffer, volume: number) {
     if (!audioContext) audioContext = new AudioContext();
@@ -141,7 +149,9 @@ async function playSound(buffer: AudioBuffer, volume: number) {
 export default definePlugin({
     name: "Animalese",
     description: "Plays animalese (they yap a lot) on message sent",
-    authors: [{ name: "ryanamay", id: 1262793452236570667n }],
+    authors: [
+        { name: "ryanamay", id: 1262793452236570667n },
+        { name: "communistkittycat", id: 808802000224518264 }],
     settings,
 
     start() {
