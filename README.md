@@ -3,6 +3,7 @@ animalese yapping in your discord client
 
 > [!WARNING]
 > don't go to Vencord support if you can't install this. 
+> this plugin is already built into Equicord tho :3
 
 ### demo
 
