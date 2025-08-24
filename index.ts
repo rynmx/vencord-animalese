@@ -214,7 +214,7 @@ export default definePlugin({
             const processOwnMessages = this.userPreferences?.processOwnMessages ?? true;
             if (String(message.author.id) === String(UserStore.getCurrentUser().id)) {
                 // console.log("Ignoring own message:", message.content); // Debug log for own messages
-                return;
+                //return; //broken aparently so i just disabled it, vencord is weird :33333333333
             }
 
             try {
